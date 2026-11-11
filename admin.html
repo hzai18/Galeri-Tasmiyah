@@ -39,8 +39,10 @@
             <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-100 transition">Logout</button>
         </div>
 
-        <div class="flex gap-2 mb-6 border-b border-gray-300 pb-2">
+        <!-- TABS NAVIGASI -->
+        <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-300 pb-2">
             <button id="tabUpload" class="px-4 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Upload Foto</button>
+            <button id="tabManagePhotos" class="px-4 py-2 font-bold text-gray-500 hover:text-gray-800">Kelola Galeri</button>
             <button id="tabManage" class="px-4 py-2 font-bold text-gray-500 hover:text-gray-800 hidden">Manajemen Admin</button>
         </div>
 
@@ -48,7 +50,6 @@
         <div id="contentUpload" class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
             <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Dokumentasi</h2>
             <div class="space-y-5">
-                
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori Acara</label>
@@ -66,7 +67,6 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Link YouTube Live Streaming (Opsional)</label>
                     <input type="url" id="youtubeInput" placeholder="Masukkan link YouTube (Contoh: https://youtube.com/...)" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
-                    <p class="text-xs text-gray-500 mt-1">*Kosongkan jika acara ini tidak memiliki rekaman video.</p>
                 </div>
 
                 <div>
@@ -85,7 +85,32 @@
             </div>
         </div>
 
-        <!-- KONTEN: MANAJEMEN AKUN -->
+        <!-- KONTEN BARU: KELOLA GALERI (HAPUS FOTO) -->
+        <div id="contentManagePhotos" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <h2 class="text-xl font-bold text-gray-800">Kelola Foto Galeri</h2>
+                
+                <select id="manageCategorySelect" class="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer text-sm">
+                    <option value="Tasmiyah" selected>Tasmiyah</option>
+                    <option value="Akad Nikah">Akad Nikah</option>
+                </select>
+            </div>
+
+            <p class="text-sm text-gray-500 mb-3">1. Pilih tanggal untuk melihat foto yang sudah diupload:</p>
+            <div id="manageDatesContainer" class="flex flex-wrap gap-2 mb-6">
+                <!-- Tombol tanggal + jumlah file muncul disini -->
+                <p class="text-sm text-gray-400 italic" id="manageLoadingText">Mengambil data...</p>
+            </div>
+
+            <hr class="mb-6">
+
+            <p class="text-sm text-gray-500 mb-3 hidden" id="manageGridTitle">2. Daftar foto (Klik ikon sampah untuk menghapus):</p>
+            <div id="managePhotosGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <!-- Grid foto muncul disini -->
+            </div>
+        </div>
+
+        <!-- KONTEN: MANAJEMEN AKUN (SUPERADMIN SAJA) -->
         <div id="contentManage" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200 border-l-4 border-l-yellow-400">
             <h2 class="text-xl font-bold text-gray-800 mb-2">Buat Akun Admin Baru</h2>
             <p class="text-sm text-gray-500 mb-6">Akun ini bisa digunakan oleh fotografer untuk login dan upload foto.</p>
@@ -102,7 +127,8 @@
     <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Tambahan fitur deleteDoc 
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA25g_miNf3okAtHZHDxIT_tYQzKcZl1fI",
@@ -159,23 +185,145 @@
 
         document.getElementById('logoutBtn').addEventListener('click', () => window.location.reload());
 
+        // --- LOGIKA TABS ---
         const tabUpload = document.getElementById('tabUpload');
+        const tabManagePhotos = document.getElementById('tabManagePhotos');
         const tabManage = document.getElementById('tabManage');
+        
         const contentUpload = document.getElementById('contentUpload');
+        const contentManagePhotos = document.getElementById('contentManagePhotos');
         const contentManage = document.getElementById('contentManage');
 
+        function resetTabs() {
+            [tabUpload, tabManagePhotos, tabManage].forEach(t => { t.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); t.classList.add('text-gray-500'); });
+            [contentUpload, contentManagePhotos, contentManage].forEach(c => c.classList.add('hidden'));
+        }
+
         tabUpload.addEventListener('click', () => {
-            contentUpload.classList.remove('hidden'); contentManage.classList.add('hidden');
+            resetTabs();
             tabUpload.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabUpload.classList.remove('text-gray-500');
-            tabManage.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tabManage.classList.add('text-gray-500');
+            contentUpload.classList.remove('hidden');
+        });
+
+        tabManagePhotos.addEventListener('click', () => {
+            resetTabs();
+            tabManagePhotos.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabManagePhotos.classList.remove('text-gray-500');
+            contentManagePhotos.classList.remove('hidden');
+            // Muat data saat tab ini dibuka
+            fetchManagePhotosData(); 
         });
 
         tabManage.addEventListener('click', () => {
-            contentManage.classList.remove('hidden'); contentUpload.classList.add('hidden');
+            resetTabs();
             tabManage.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabManage.classList.remove('text-gray-500');
-            tabUpload.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tabUpload.classList.add('text-gray-500');
+            contentManage.classList.remove('hidden');
         });
 
+        // --- LOGIKA KELOLA GALERI (HAPUS FOTO) ---
+        let allGalleryPhotos = [];
+        const manageCategorySelect = document.getElementById('manageCategorySelect');
+        const manageDatesContainer = document.getElementById('manageDatesContainer');
+        const managePhotosGrid = document.getElementById('managePhotosGrid');
+        const manageLoadingText = document.getElementById('manageLoadingText');
+        const manageGridTitle = document.getElementById('manageGridTitle');
+
+        async function fetchManagePhotosData() {
+            manageDatesContainer.innerHTML = '<p class="text-sm text-gray-400 italic">Mengambil data galeri dari database...</p>';
+            managePhotosGrid.innerHTML = '';
+            manageGridTitle.classList.add('hidden');
+
+            try {
+                const q = query(collection(db, "photos"), orderBy("tanggal", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                allGalleryPhotos = [];
+                querySnapshot.forEach((doc) => {
+                    allGalleryPhotos.push({ id: doc.id, ...doc.data() });
+                });
+                
+                renderManageDates();
+            } catch (error) {
+                console.error(error);
+                manageDatesContainer.innerHTML = '<p class="text-sm text-red-500">Gagal mengambil data.</p>';
+            }
+        }
+
+        function renderManageDates() {
+            manageDatesContainer.innerHTML = '';
+            managePhotosGrid.innerHTML = '';
+            manageGridTitle.classList.add('hidden');
+
+            const selectedCat = manageCategorySelect.value;
+            const filteredPhotos = allGalleryPhotos.filter(p => (p.kategori || "Tasmiyah") === selectedCat);
+
+            if (filteredPhotos.length === 0) {
+                manageDatesContainer.innerHTML = `<p class="text-sm text-gray-500">Belum ada foto untuk kategori ${selectedCat}.</p>`;
+                return;
+            }
+
+            // Hitung jumlah foto per tanggal
+            const dateCounts = {};
+            filteredPhotos.forEach(p => {
+                if(!dateCounts[p.tanggal]) dateCounts[p.tanggal] = { display: p.displayDate, count: 0 };
+                dateCounts[p.tanggal].count++;
+            });
+
+            // Buat tombol untuk setiap tanggal
+            Object.keys(dateCounts).forEach(date => {
+                const btn = document.createElement('button');
+                btn.className = "flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:border-blue-300 transition focus:ring-2 focus:ring-blue-500 outline-none";
+                btn.innerHTML = `${dateCounts[date].display} <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs">${dateCounts[date].count} file</span>`;
+                
+                btn.onclick = () => renderManageGrid(selectedCat, date);
+                manageDatesContainer.appendChild(btn);
+            });
+        }
+
+        function renderManageGrid(kategori, date) {
+            managePhotosGrid.innerHTML = '';
+            manageGridTitle.classList.remove('hidden');
+
+            const targetPhotos = allGalleryPhotos.filter(p => (p.kategori || "Tasmiyah") === kategori && p.tanggal === date);
+
+            targetPhotos.forEach(photo => {
+                const card = document.createElement('div');
+                card.className = "relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-gray-50 aspect-square";
+                
+                // Gambar
+                card.innerHTML = `<img src="${photo.thumbUrl || photo.url}" class="w-full h-full object-cover">`;
+                
+                // Tombol Hapus (Muncul merah di pojok kanan atas)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "absolute top-2 right-2 bg-red-600 text-white p-2 rounded-lg shadow-md hover:bg-red-700 transition opacity-90 hover:opacity-100";
+                deleteBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+                
+                deleteBtn.onclick = async () => {
+                    const confirmDel = confirm("Yakin ingin menghapus foto ini secara permanen dari galeri?");
+                    if(confirmDel) {
+                        try {
+                            // Hapus dokumen dari Firestore Database
+                            await deleteDoc(doc(db, "photos", photo.id));
+                            // Hapus dari array lokal
+                            allGalleryPhotos = allGalleryPhotos.filter(p => p.id !== photo.id);
+                            // Refresh tampilan (Hanya kotak fotonya yang hilang)
+                            card.remove(); 
+                            // Update ulang daftar jumlah tanggal
+                            renderManageDates();
+                            renderManageGrid(kategori, date);
+                        } catch (e) {
+                            alert("Gagal menghapus foto. Periksa koneksi.");
+                        }
+                    }
+                };
+
+                card.appendChild(deleteBtn);
+                managePhotosGrid.appendChild(card);
+            });
+        }
+
+        manageCategorySelect.addEventListener('change', renderManageDates);
+
+        // --- BUAT ADMIN LOGIC ---
         document.getElementById('createAdminBtn').addEventListener('click', async () => {
             const nu = document.getElementById('newUsername').value;
             const np = document.getElementById('newPassword').value;
@@ -237,7 +385,6 @@
                     const imgbbResult = await imgbbResponse.json();
 
                     if (imgbbResult.success) {
-                        // AMBIL VERSI KOMPRESI UNTUK THUMBNAIL (display_url atau url biasa jika tidak ada)
                         const directImageUrl = imgbbResult.data.url;
                         const thumbImageUrl = imgbbResult.data.display_url || imgbbResult.data.thumb.url || directImageUrl; 
 
@@ -245,8 +392,8 @@
                             kategori: kategoriValue,
                             tanggal: dateValue,
                             displayDate: displayDate,
-                            url: directImageUrl,          // Resolusi asli untuk zoom/download
-                            thumbUrl: thumbImageUrl,      // Resolusi ringan untuk tampilan grid
+                            url: directImageUrl,
+                            thumbUrl: thumbImageUrl,
                             youtubeUrl: youtubeValue,
                             uploader: lblUser.innerText,
                             uploadedAt: new Date()
@@ -261,6 +408,9 @@
             statusText.classList.add('text-green-600');
             fileInput.value = ""; youtubeInput.value = ""; 
             uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
+            
+            // Reload background data management if new upload happens
+            fetchManagePhotosData();
         });
     </script>
 </body>
