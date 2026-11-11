@@ -3,77 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Upload - Galeri Al Mursyidul Amin TV</title>
+    <title>Panel Admin - Galeri Al Mursyidul Amin TV</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/hzai18/Pustaka-Lirik-TV/refs/heads/main/gold.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans flex items-center justify-center p-6">
+<body class="bg-gray-100 min-h-screen font-sans flex flex-col">
 
-    <!-- LAYAR LOGIN (Tampil Pertama Kali) -->
-    <div id="loginScreen" class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl text-center transition-all duration-500">
-        <img src="https://raw.githubusercontent.com/hzai18/Galeri-Tasmiyah/refs/heads/main/Logo%20AlmaTV%20copy.png" alt="Logo" class="h-20 mx-auto mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Login Admin</h2>
-        <p class="text-sm text-gray-500 mb-6">Masukkan kata sandi untuk mengakses panel upload foto.</p>
-        
-        <input type="password" id="passwordInput" placeholder="Masukkan Password" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center text-lg mb-4">
-        <p id="loginError" class="text-red-500 text-sm hidden mb-4">Password salah! Silakan coba lagi.</p>
-        
-        <button id="loginBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition shadow-md">
-            Masuk
-        </button>
+    <!-- LAYAR LOGIN -->
+    <div id="loginScreen" class="flex-1 flex items-center justify-center p-6 transition-all duration-500">
+        <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl text-center">
+            <img src="https://raw.githubusercontent.com/hzai18/Galeri-Tasmiyah/refs/heads/main/Logo%20AlmaTV%20copy.png" class="h-20 mx-auto mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Admin</h2>
+            <p class="text-sm text-gray-500 mb-6">Masuk menggunakan Username & Password.</p>
+            
+            <input type="text" id="usernameInput" placeholder="Username" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center mb-3">
+            <input type="password" id="passwordInput" placeholder="Password" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center mb-4">
+            
+            <p id="loginError" class="text-red-500 text-sm hidden mb-4 font-semibold">Username atau Password salah!</p>
+            
+            <button id="loginBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-md flex justify-center items-center gap-2">
+                <span id="loginText">Masuk</span>
+                <span id="loginLoading" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+            </button>
+        </div>
     </div>
 
-    <!-- PANEL UPLOAD (Tersembunyi sampai login berhasil) -->
-    <div id="adminPanel" class="w-full max-w-2xl mx-auto space-y-6 hidden transition-all duration-500">
+    <!-- PANEL ADMIN UTAMA -->
+    <div id="adminPanel" class="w-full max-w-3xl mx-auto p-6 hidden">
         
-        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-1">Panel Upload Foto (ImgBB)</h1>
-                    <p class="text-gray-500 text-sm">Unggah foto ke ImgBB. Tautan otomatis tersimpan ke Firestore.</p>
-                </div>
-                <button id="logoutBtn" class="text-red-500 hover:text-red-700 text-sm font-semibold underline">Keluar</button>
+        <!-- Header Panel -->
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Halo, <span id="lblUser" class="text-blue-600">Admin</span></h1>
+                <p class="text-sm text-gray-500">Akses: <span id="lblRole" class="uppercase font-bold text-gray-700"></span></p>
             </div>
+            <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-100 transition">Logout</button>
+        </div>
 
-            <div class="space-y-6">
+        <!-- TABS NAVIGASI -->
+        <div class="flex gap-2 mb-6 border-b border-gray-300 pb-2">
+            <button id="tabUpload" class="px-4 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Upload Foto</button>
+            <button id="tabManage" class="px-4 py-2 font-bold text-gray-500 hover:text-gray-800 hidden">Manajemen Admin</button>
+        </div>
+
+        <!-- KONTEN: UPLOAD -->
+        <div id="contentUpload" class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Dokumentasi</h2>
+            <div class="space-y-5">
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori Acara</label>
+                    <select id="kategoriInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium cursor-pointer">
+                        <option value="Tasmiyah" selected>Tasmiyah</option>
+                        <option value="Akad Nikah">Akad Nikah</option>
+                    </select>
+                </div>
+
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Acara</label>
-                    <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Foto (Bisa banyak sekaligus)</label>
-                    <input type="file" id="fileInput" multiple accept="image/*" class="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:outline-none">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih File Foto (Bisa banyak)</label>
+                    <input type="file" id="fileInput" multiple accept="image/*" class="w-full p-3 border border-gray-300 rounded-xl bg-gray-50">
                 </div>
 
-                <button id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md">
-                    Mulai Upload ke Galeri
+                <button id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md mt-4">
+                    Mulai Upload
                 </button>
-            </div>
 
-            <!-- Status Progress -->
-            <div id="statusArea" class="mt-8 hidden">
-                <h3 class="font-semibold text-gray-700 mb-2">Status Upload:</h3>
-                <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
-                    <div id="progressBar" class="bg-blue-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div id="statusArea" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-2"><div id="progressBar" class="bg-blue-500 h-3 rounded-full" style="width: 0%"></div></div>
+                    <p id="statusText" class="text-sm text-gray-600 font-medium">Menyiapkan...</p>
                 </div>
-                <p id="statusText" class="text-sm text-gray-600">Menyiapkan file...</p>
+            </div>
+        </div>
+
+        <!-- KONTEN: MANAJEMEN AKUN (Hanya Superadmin) -->
+        <div id="contentManage" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200 border-l-4 border-l-yellow-400">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Buat Akun Admin Baru</h2>
+            <p class="text-sm text-gray-500 mb-6">Akun ini bisa digunakan oleh fotografer untuk login dan upload foto.</p>
+            
+            <div class="space-y-4">
+                <input type="text" id="newUsername" placeholder="Username (misal: dimas_foto)" class="w-full p-3 border border-gray-300 rounded-xl">
+                <input type="text" id="newPassword" placeholder="Password" class="w-full p-3 border border-gray-300 rounded-xl">
+                <button id="createAdminBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl shadow-md">Buat Akun Admin</button>
+                <p id="createMsg" class="text-sm font-semibold hidden"></p>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK (Firestore Saja) -->
+    <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ==========================================
-        // PENGATURAN PASSWORD ADMIN (GANTI DI SINI)
-        // ==========================================
-        const KATA_SANDI_ADMIN = "almatv2026";
-
-        // ==========================================
-        // 1. FIREBASE CONFIG 
-        // ==========================================
+        // ================= CONFIG FIREBASE =================
         const firebaseConfig = {
             apiKey: "AIzaSyA25g_miNf3okAtHZHDxIT_tYQzKcZl1fI",
             authDomain: "galeri-almatv.firebaseapp.com",
@@ -85,50 +113,126 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ==========================================
-        // 2. API KEY IMGBB 
-        // ==========================================
+        // ================= CONFIG IMGBB =================
         const IMGBB_API_KEY = "8ef542627deeb43e5440fa06fd1d452c";
 
-        // --- LOGIKA LOGIN SCREEN ---
+        // DOM Elemen
         const loginScreen = document.getElementById('loginScreen');
         const adminPanel = document.getElementById('adminPanel');
-        const passwordInput = document.getElementById('passwordInput');
-        const loginBtn = document.getElementById('loginBtn');
-        const loginError = document.getElementById('loginError');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        function prosesLogin() {
-            if (passwordInput.value === KATA_SANDI_ADMIN) {
-                loginScreen.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                document.body.classList.remove('flex', 'items-center', 'justify-center');
-                passwordInput.value = ""; // bersihkan form
-                loginError.classList.add('hidden');
-            } else {
-                loginError.classList.remove('hidden');
+        const lblUser = document.getElementById('lblUser');
+        const lblRole = document.getElementById('lblRole');
+        
+        // --- LOGIKA SETUP DEFAULT SUPERADMIN ---
+        async function checkDefaultSuperadmin() {
+            const q = query(collection(db, "users"), where("username", "==", "superadmin"));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                await setDoc(doc(db, "users", "superadmin_doc"), {
+                    username: "superadmin",
+                    password: "superadmin123",
+                    role: "superadmin"
+                });
+                console.log("Akun superadmin default berhasil dibuat.");
             }
         }
+        checkDefaultSuperadmin();
 
-        loginBtn.addEventListener('click', prosesLogin);
-        
-        // Tekan Enter untuk login
-        passwordInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') prosesLogin();
+        // --- LOGIKA LOGIN ---
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const userVal = document.getElementById('usernameInput').value;
+            const passVal = document.getElementById('passwordInput').value;
+            const err = document.getElementById('loginError');
+            
+            document.getElementById('loginText').classList.add('hidden');
+            document.getElementById('loginLoading').classList.remove('hidden');
+
+            try {
+                const q = query(collection(db, "users"), where("username", "==", userVal), where("password", "==", passVal));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const userData = querySnapshot.docs[0].data();
+                    
+                    loginScreen.classList.add('hidden');
+                    adminPanel.classList.remove('hidden');
+                    
+                    lblUser.innerText = userData.username;
+                    lblRole.innerText = userData.role;
+                    
+                    if(userData.role === 'superadmin') {
+                        document.getElementById('tabManage').classList.remove('hidden');
+                    }
+                    err.classList.add('hidden');
+                } else {
+                    err.classList.remove('hidden');
+                }
+            } catch(e) {
+                console.error(e);
+                err.innerText = "Terjadi kesalahan koneksi!";
+                err.classList.remove('hidden');
+            }
+            
+            document.getElementById('loginText').classList.remove('hidden');
+            document.getElementById('loginLoading').classList.add('hidden');
         });
 
-        // Tombol Keluar (Logout)
-        logoutBtn.addEventListener('click', () => {
-            adminPanel.classList.add('hidden');
-            loginScreen.classList.remove('hidden');
-            document.body.classList.add('flex', 'items-center', 'justify-center');
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.reload();
         });
 
+        // --- LOGIKA TABS ---
+        const tabUpload = document.getElementById('tabUpload');
+        const tabManage = document.getElementById('tabManage');
+        const contentUpload = document.getElementById('contentUpload');
+        const contentManage = document.getElementById('contentManage');
+
+        tabUpload.addEventListener('click', () => {
+            contentUpload.classList.remove('hidden'); contentManage.classList.add('hidden');
+            tabUpload.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabUpload.classList.remove('text-gray-500');
+            tabManage.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tabManage.classList.add('text-gray-500');
+        });
+
+        tabManage.addEventListener('click', () => {
+            contentManage.classList.remove('hidden'); contentUpload.classList.add('hidden');
+            tabManage.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabManage.classList.remove('text-gray-500');
+            tabUpload.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tabUpload.classList.add('text-gray-500');
+        });
+
+        // --- LOGIKA BUAT AKUN ADMIN ---
+        document.getElementById('createAdminBtn').addEventListener('click', async () => {
+            const nu = document.getElementById('newUsername').value;
+            const np = document.getElementById('newPassword').value;
+            const msg = document.getElementById('createMsg');
+
+            if(!nu || !np) {
+                msg.innerText = "Isi username & password!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return;
+            }
+
+            try {
+                const qCheck = query(collection(db, "users"), where("username", "==", nu));
+                const snap = await getDocs(qCheck);
+                if(!snap.empty) {
+                    msg.innerText = "Username sudah dipakai!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return;
+                }
+
+                await addDoc(collection(db, "users"), {
+                    username: nu,
+                    password: np,
+                    role: "admin"
+                });
+
+                msg.innerText = `Berhasil! Akun "${nu}" sudah bisa digunakan.`; msg.className = "text-sm font-semibold text-green-600"; msg.classList.remove('hidden');
+                document.getElementById('newUsername').value = ""; document.getElementById('newPassword').value = "";
+            } catch(e) {
+                msg.innerText = "Gagal membuat akun."; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden');
+            }
+        });
 
         // --- LOGIKA UPLOAD ---
-        const dateInput = document.getElementById('dateInput');
-        const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const dateInput = document.getElementById('dateInput');
+        const kategoriInput = document.getElementById('kategoriInput');
         const statusArea = document.getElementById('statusArea');
         const progressBar = document.getElementById('progressBar');
         const statusText = document.getElementById('statusText');
@@ -142,63 +246,45 @@
         uploadBtn.addEventListener('click', async () => {
             const files = fileInput.files;
             const dateValue = dateInput.value;
+            const kategoriValue = kategoriInput.value;
 
             if (!dateValue) { alert("Pilih tanggal acara!"); return; }
             if (files.length === 0) { alert("Pilih minimal 1 foto!"); return; }
 
             const displayDate = formatDisplayDate(dateValue);
             
-            uploadBtn.disabled = true;
-            uploadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            uploadBtn.disabled = true; uploadBtn.classList.add('opacity-50');
             statusArea.classList.remove('hidden');
 
             let totalFiles = files.length;
             let uploadedFiles = 0;
 
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                statusText.innerText = `Mengunggah foto ${i + 1} dari ${totalFiles}...`;
-
+                statusText.innerText = `Upload foto ${i + 1} dari ${totalFiles}...`;
                 try {
                     const formData = new FormData();
-                    formData.append("image", file);
-
-                    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                        method: "POST",
-                        body: formData
-                    });
-                    
+                    formData.append("image", files[i]);
+                    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
                     const imgbbResult = await imgbbResponse.json();
 
                     if (imgbbResult.success) {
-                        const directImageUrl = imgbbResult.data.url; 
-                        
                         await addDoc(collection(db, "photos"), {
+                            kategori: kategoriValue,
                             tanggal: dateValue,
                             displayDate: displayDate,
-                            url: directImageUrl,
-                            fileName: file.name,
+                            url: imgbbResult.data.url,
+                            uploader: lblUser.innerText,
                             uploadedAt: new Date()
                         });
-
                         uploadedFiles++;
                         progressBar.style.width = `${(uploadedFiles / totalFiles) * 100}%`;
-                    } else {
-                        console.error("Gagal upload ke ImgBB:", imgbbResult);
                     }
-
-                } catch (error) {
-                    console.error("Error upload file: ", error);
-                }
+                } catch (error) { console.error(error); }
             }
 
-            statusText.innerText = `Selesai! Berhasil mengunggah ${uploadedFiles} foto.`;
-            statusText.classList.add('text-green-600', 'font-bold');
-            
-            fileInput.value = "";
-            uploadBtn.disabled = false;
-            uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            uploadBtn.innerText = "Upload Foto Lainnya";
+            statusText.innerText = `Selesai! ${uploadedFiles} foto ${kategoriValue} terupload.`;
+            statusText.classList.add('text-green-600');
+            fileInput.value = ""; uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
         });
     </script>
 </body>
