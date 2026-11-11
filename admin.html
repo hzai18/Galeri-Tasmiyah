@@ -63,7 +63,6 @@
                     </div>
                 </div>
 
-                <!-- INPUT YOUTUBE BARU -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Link YouTube Live Streaming (Opsional)</label>
                     <input type="url" id="youtubeInput" placeholder="Masukkan link YouTube (Contoh: https://youtube.com/...)" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
@@ -200,7 +199,7 @@
         const fileInput = document.getElementById('fileInput');
         const dateInput = document.getElementById('dateInput');
         const kategoriInput = document.getElementById('kategoriInput');
-        const youtubeInput = document.getElementById('youtubeInput'); // Ambil nilai YT
+        const youtubeInput = document.getElementById('youtubeInput'); 
         
         const statusArea = document.getElementById('statusArea');
         const progressBar = document.getElementById('progressBar');
@@ -216,7 +215,7 @@
             const files = fileInput.files;
             const dateValue = dateInput.value;
             const kategoriValue = kategoriInput.value;
-            const youtubeValue = youtubeInput.value; // Simpan nilai dari input YouTube
+            const youtubeValue = youtubeInput.value;
 
             if (!dateValue) { alert("Pilih tanggal acara!"); return; }
             if (files.length === 0) { alert("Pilih minimal 1 foto!"); return; }
@@ -238,12 +237,17 @@
                     const imgbbResult = await imgbbResponse.json();
 
                     if (imgbbResult.success) {
+                        // AMBIL VERSI KOMPRESI UNTUK THUMBNAIL (display_url atau url biasa jika tidak ada)
+                        const directImageUrl = imgbbResult.data.url;
+                        const thumbImageUrl = imgbbResult.data.display_url || imgbbResult.data.thumb.url || directImageUrl; 
+
                         await addDoc(collection(db, "photos"), {
                             kategori: kategoriValue,
                             tanggal: dateValue,
                             displayDate: displayDate,
-                            url: imgbbResult.data.url,
-                            youtubeUrl: youtubeValue, // MENGIRIM LINK YOUTUBE KE DATABASE
+                            url: directImageUrl,          // Resolusi asli untuk zoom/download
+                            thumbUrl: thumbImageUrl,      // Resolusi ringan untuk tampilan grid
+                            youtubeUrl: youtubeValue,
                             uploader: lblUser.innerText,
                             uploadedAt: new Date()
                         });
@@ -255,7 +259,7 @@
 
             statusText.innerText = `Selesai! ${uploadedFiles} foto ${kategoriValue} terupload.`;
             statusText.classList.add('text-green-600');
-            fileInput.value = ""; youtubeInput.value = ""; // Bersihkan form
+            fileInput.value = ""; youtubeInput.value = ""; 
             uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
         });
     </script>
