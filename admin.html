@@ -48,7 +48,7 @@
 
         <!-- KONTEN: UPLOAD -->
         <div id="contentUpload" class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Dokumentasi</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Dokumentasi (Cloudinary)</h2>
             <div class="space-y-5">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <!-- KONTEN BARU: KELOLA GALERI (HAPUS FOTO) -->
+        <!-- KONTEN: KELOLA GALERI -->
         <div id="contentManagePhotos" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <h2 class="text-xl font-bold text-gray-800">Kelola Foto Galeri</h2>
@@ -98,7 +98,6 @@
 
             <p class="text-sm text-gray-500 mb-3">1. Pilih tanggal untuk melihat foto yang sudah diupload:</p>
             <div id="manageDatesContainer" class="flex flex-wrap gap-2 mb-6">
-                <!-- Tombol tanggal + jumlah file muncul disini -->
                 <p class="text-sm text-gray-400 italic" id="manageLoadingText">Mengambil data...</p>
             </div>
 
@@ -110,7 +109,7 @@
             </div>
         </div>
 
-        <!-- KONTEN: MANAJEMEN AKUN (SUPERADMIN SAJA) -->
+        <!-- KONTEN: MANAJEMEN AKUN -->
         <div id="contentManage" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200 border-l-4 border-l-yellow-400">
             <h2 class="text-xl font-bold text-gray-800 mb-2">Buat Akun Admin Baru</h2>
             <p class="text-sm text-gray-500 mb-6">Akun ini bisa digunakan oleh fotografer untuk login dan upload foto.</p>
@@ -124,12 +123,14 @@
         </div>
     </div>
 
-    <!-- FIREBASE SDK -->
+    <!-- FIREBASE SDK & CLOUDINARY LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // Tambahan fitur deleteDoc 
         import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // ===============================================
+        // 1. CONFIG FIREBASE
+        // ===============================================
         const firebaseConfig = {
             apiKey: "AIzaSyA25g_miNf3okAtHZHDxIT_tYQzKcZl1fI",
             authDomain: "galeri-almatv.firebaseapp.com",
@@ -140,7 +141,12 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const IMGBB_API_KEY = "8ef542627deeb43e5440fa06fd1d452c";
+
+        // ===============================================
+        // 2. CONFIG CLOUDINARY (SUDAH DIUPDATE)
+        // ===============================================
+        const CLOUDINARY_CLOUD_NAME = "kktajmby"; 
+        const CLOUDINARY_UPLOAD_PRESET = "ml_default"; 
 
         const loginScreen = document.getElementById('loginScreen');
         const adminPanel = document.getElementById('adminPanel');
@@ -209,7 +215,6 @@
             resetTabs();
             tabManagePhotos.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tabManagePhotos.classList.remove('text-gray-500');
             contentManagePhotos.classList.remove('hidden');
-            // Muat data saat tab ini dibuka
             fetchManagePhotosData(); 
         });
 
@@ -219,12 +224,11 @@
             contentManage.classList.remove('hidden');
         });
 
-        // --- LOGIKA KELOLA GALERI (HAPUS FOTO) ---
+        // --- LOGIKA KELOLA GALERI ---
         let allGalleryPhotos = [];
         const manageCategorySelect = document.getElementById('manageCategorySelect');
         const manageDatesContainer = document.getElementById('manageDatesContainer');
         const managePhotosGrid = document.getElementById('managePhotosGrid');
-        const manageLoadingText = document.getElementById('manageLoadingText');
         const manageGridTitle = document.getElementById('manageGridTitle');
 
         async function fetchManagePhotosData() {
@@ -240,10 +244,8 @@
                 querySnapshot.forEach((doc) => {
                     allGalleryPhotos.push({ id: doc.id, ...doc.data() });
                 });
-                
                 renderManageDates();
             } catch (error) {
-                console.error(error);
                 manageDatesContainer.innerHTML = '<p class="text-sm text-red-500">Gagal mengambil data.</p>';
             }
         }
@@ -261,19 +263,16 @@
                 return;
             }
 
-            // Hitung jumlah foto per tanggal
             const dateCounts = {};
             filteredPhotos.forEach(p => {
                 if(!dateCounts[p.tanggal]) dateCounts[p.tanggal] = { display: p.displayDate, count: 0 };
                 dateCounts[p.tanggal].count++;
             });
 
-            // Buat tombol untuk setiap tanggal
             Object.keys(dateCounts).forEach(date => {
                 const btn = document.createElement('button');
                 btn.className = "flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:border-blue-300 transition focus:ring-2 focus:ring-blue-500 outline-none";
                 btn.innerHTML = `${dateCounts[date].display} <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs">${dateCounts[date].count} file</span>`;
-                
                 btn.onclick = () => renderManageGrid(selectedCat, date);
                 manageDatesContainer.appendChild(btn);
             });
@@ -289,10 +288,8 @@
                 const card = document.createElement('div');
                 card.className = "relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-gray-50 aspect-square";
                 
-                // Gambar
                 card.innerHTML = `<img src="${photo.thumbUrl || photo.url}" class="w-full h-full object-cover">`;
                 
-                // Tombol Hapus (Muncul merah di pojok kanan atas)
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = "absolute top-2 right-2 bg-red-600 text-white p-2 rounded-lg shadow-md hover:bg-red-700 transition opacity-90 hover:opacity-100";
                 deleteBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
@@ -301,21 +298,14 @@
                     const confirmDel = confirm("Yakin ingin menghapus foto ini secara permanen dari galeri?");
                     if(confirmDel) {
                         try {
-                            // Hapus dokumen dari Firestore Database
                             await deleteDoc(doc(db, "photos", photo.id));
-                            // Hapus dari array lokal
                             allGalleryPhotos = allGalleryPhotos.filter(p => p.id !== photo.id);
-                            // Refresh tampilan (Hanya kotak fotonya yang hilang)
                             card.remove(); 
-                            // Update ulang daftar jumlah tanggal
                             renderManageDates();
                             renderManageGrid(kategori, date);
-                        } catch (e) {
-                            alert("Gagal menghapus foto. Periksa koneksi.");
-                        }
+                        } catch (e) { alert("Gagal menghapus foto. Periksa koneksi."); }
                     }
                 };
-
                 card.appendChild(deleteBtn);
                 managePhotosGrid.appendChild(card);
             });
@@ -342,7 +332,7 @@
             } catch(e) { msg.innerText = "Gagal membuat akun."; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); }
         });
 
-        // --- UPLOAD LOGIC ---
+        // --- UPLOAD LOGIC CLOUDINARY ---
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
         const dateInput = document.getElementById('dateInput');
@@ -380,26 +370,35 @@
                 statusText.innerText = `Upload foto ${i + 1} dari ${totalFiles}...`;
                 try {
                     const formData = new FormData();
-                    formData.append("image", files[i]);
-                    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
-                    const imgbbResult = await imgbbResponse.json();
+                    formData.append("file", files[i]); 
+                    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET); 
 
-                    if (imgbbResult.success) {
-                        const directImageUrl = imgbbResult.data.url;
-                        const thumbImageUrl = imgbbResult.data.display_url || imgbbResult.data.thumb.url || directImageUrl; 
+                    const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { 
+                        method: "POST", 
+                        body: formData 
+                    });
+                    const cloudinaryResult = await cloudinaryResponse.json();
+
+                    if (cloudinaryResult.secure_url) {
+                        const directImageUrl = cloudinaryResult.secure_url;
+                        
+                        // Membuat link thumbnail otomatis yang sangat ringan untuk grid
+                        const thumbImageUrl = directImageUrl.replace('/upload/', '/upload/c_limit,w_600,q_auto,f_auto/'); 
 
                         await addDoc(collection(db, "photos"), {
                             kategori: kategoriValue,
                             tanggal: dateValue,
                             displayDate: displayDate,
-                            url: directImageUrl,
-                            thumbUrl: thumbImageUrl,
+                            url: directImageUrl,          
+                            thumbUrl: thumbImageUrl,      
                             youtubeUrl: youtubeValue,
                             uploader: lblUser.innerText,
                             uploadedAt: new Date()
                         });
                         uploadedFiles++;
                         progressBar.style.width = `${(uploadedFiles / totalFiles) * 100}%`;
+                    } else {
+                        console.error("Gagal dari Cloudinary:", cloudinaryResult);
                     }
                 } catch (error) { console.error(error); }
             }
@@ -409,7 +408,6 @@
             fileInput.value = ""; youtubeInput.value = ""; 
             uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
             
-            // Reload background data management if new upload happens
             fetchManagePhotosData();
         });
     </script>
