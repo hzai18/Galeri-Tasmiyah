@@ -53,7 +53,6 @@
 
     <main class="max-w-3xl mx-auto mt-4 hidden" id="mainContent">
         
-        <!-- Peringatan -->
         <div class="px-4 mb-4">
             <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-center">
                 <p class="text-[12px] text-red-600 dark:text-red-400 font-medium">
@@ -62,12 +61,10 @@
             </div>
         </div>
         
-        <!-- Filter Tanggal -->
         <div class="w-full overflow-x-auto hide-scrollbar pl-4 pr-4 pb-4 mb-2" style="scroll-snap-type: x mandatory;">
             <div id="dateChipsContainer" class="flex gap-3 w-max"></div>
         </div>
 
-        <!-- BANNER YOUTUBE (Tersembunyi secara default) -->
         <div id="youtubeBanner" class="hidden px-4 mb-6">
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                 <div class="text-center sm:text-left">
@@ -83,10 +80,8 @@
             </div>
         </div>
 
-        <!-- Grid Foto -->
         <div id="photoGallery" class="grid grid-cols-3 sm:grid-cols-4 gap-[2px] px-[2px]"></div>
 
-        <!-- States -->
         <div id="emptyMessage" class="text-center py-20 px-4">
             <h3 class="text-lg font-semibold text-gray-400 dark:text-gray-600">Pilih tanggal di atas untuk melihat foto <span id="lblKategori">Tasmiyah</span>.</h3>
         </div>
@@ -131,7 +126,6 @@
         const loadingMessage = document.getElementById('loadingMessage');
         const lblKategori = document.getElementById('lblKategori');
         
-        // Elemen YouTube
         const youtubeBanner = document.getElementById('youtubeBanner');
         const youtubeLinkBtn = document.getElementById('youtubeLinkBtn');
         
@@ -167,8 +161,9 @@
                         kategori: data.kategori || "Tasmiyah",
                         date: data.tanggal,
                         displayDate: data.displayDate,
-                        url: data.url,
-                        youtubeUrl: data.youtubeUrl || "" // Ambil data URL Youtube jika ada
+                        url: data.url, // Kualitas Asli (HD)
+                        thumbUrl: data.thumbUrl || data.url, // Kualitas Kompresi (Ringan) - Fallback ke URL jika data lama
+                        youtubeUrl: data.youtubeUrl || ""
                     });
                 });
 
@@ -185,7 +180,7 @@
         function updateViewByCategory(kategori) {
             lblKategori.textContent = kategori;
             photoGallery.innerHTML = '';
-            youtubeBanner.classList.add('hidden'); // Sembunyikan banner YT saat ganti kategori
+            youtubeBanner.classList.add('hidden'); 
             
             const categoryPhotos = allPhotos.filter(p => p.kategori === kategori);
             
@@ -228,7 +223,6 @@
             photoGallery.innerHTML = ''; 
             const finalPhotos = categoryPhotos.filter(p => p.date === selectedDate);
 
-            // CEK YOUTUBE URL: Apakah ada foto di tanggal ini yang memiliki link YT?
             const photoWithYt = finalPhotos.find(p => p.youtubeUrl && p.youtubeUrl.trim() !== "");
             if(photoWithYt) {
                 youtubeBanner.classList.remove('hidden');
@@ -241,8 +235,11 @@
             emptyMessage.classList.add('hidden');
             finalPhotos.forEach(photo => {
                 const imgBox = document.createElement('div');
-                imgBox.className = 'aspect-square bg-gray-200 dark:bg-gray-800 cursor-pointer active:opacity-70';
-                imgBox.innerHTML = `<img src="${photo.url}" loading="lazy" class="w-full h-full object-cover">`;
+                imgBox.className = 'aspect-square bg-gray-200 dark:bg-gray-800 cursor-pointer active:opacity-70 flex items-center justify-center overflow-hidden';
+                
+                // Menggunakan thumbUrl agar super cepat (ringan), dan ditambah efek fade-in (opacity transisi)
+                imgBox.innerHTML = `<img src="${photo.thumbUrl}" loading="lazy" class="w-full h-full object-cover opacity-0 transition-opacity duration-700 ease-in-out" onload="this.classList.remove('opacity-0')">`;
+                
                 imgBox.addEventListener('click', () => openModal(photo));
                 photoGallery.appendChild(imgBox);
             });
@@ -253,6 +250,7 @@
         });
 
         function openModal(photo) {
+            // Modal tetap menggunakan URL asli (resolusi tinggi)
             modalImage.src = photo.url;
             downloadBtn.href = photo.url;
             downloadBtn.download = `AlMursyidulAmin_${photo.kategori}_${photo.id}.jpg`;
