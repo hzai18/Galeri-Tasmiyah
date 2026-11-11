@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Al Mursyidul Amin TV Galeri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'media',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'] },
+                    colors: { iosBlue: '#007AFF', iosDark: '#1C1C1E', iosGray: '#F2F2F7' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body.modal-open { overflow: hidden; }
+        * { -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-iosGray dark:bg-black text-black dark:text-white transition-colors duration-300 pb-12">
+
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="fixed inset-0 z-[100] bg-iosGray dark:bg-black flex items-center justify-center transition-opacity duration-500">
+        <div class="relative flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10 dark:bg-transparent blur-2xl rounded-full scale-110"></div>
+            <img src="https://raw.githubusercontent.com/hzai18/Galeri-Tasmiyah/refs/heads/main/Logo%20AlmaTV%20copy.png" 
+                 alt="Logo" 
+                 class="h-32 md:h-40 object-contain relative z-10 animate-pulse">
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white/70 dark:bg-iosDark/70 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 hidden" id="mainHeader">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-black/5 dark:bg-transparent blur-md"></div>
+            <img src="https://raw.githubusercontent.com/hzai18/Galeri-Tasmiyah/refs/heads/main/Logo%20AlmaTV%20copy.png" 
+                 alt="Logo" 
+                 class="h-14 object-contain relative z-10">
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto mt-6 hidden" id="mainContent">
+        
+        <!-- Peringatan & Info -->
+        <div class="px-4 mb-6">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
+                <p class="text-[13px] text-red-600 dark:text-red-400 font-medium leading-relaxed">
+                    Sistem kami hanya menyimpan dokumentasi selama <span class="font-bold">3 bulan terakhir</span>. Harap segera simpan foto Anda sebelum dihapus otomatis.
+                </p>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Jika foto di tanggal acara Anda belum tersedia, harap bersabar. Tim kami sedang dalam proses <i>editing</i> dan <i>upload</i>. Silakan cek kembali secara berkala.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Tombol Filter Tanggal -->
+        <div class="px-4 mb-2">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 ml-1">Pilih Tanggal Acara</h2>
+        </div>
+        <div class="w-full overflow-x-auto hide-scrollbar pl-4 pr-4 pb-4 mb-4" style="scroll-snap-type: x mandatory;">
+            <div id="dateChipsContainer" class="flex gap-3 w-max">
+                <!-- Tombol tanggal di-render JS -->
+            </div>
+        </div>
+
+        <!-- Grid Foto -->
+        <div id="photoGallery" class="grid grid-cols-3 sm:grid-cols-4 gap-[2px] px-[2px]"></div>
+
+        <!-- State Kosong Awal -->
+        <div id="emptyMessage" class="text-center py-20 px-4">
+            <h3 class="text-xl font-semibold text-gray-400 dark:text-gray-600">Pilih tanggal di atas untuk melihat foto.</h3>
+        </div>
+        
+        <!-- State Loading -->
+        <div id="loadingMessage" class="hidden text-center py-20 px-4">
+            <h3 class="text-lg font-medium text-gray-500 dark:text-gray-400 animate-pulse">Mengambil data foto...</h3>
+        </div>
+
+    </main>
+
+    <!-- Modal Lightbox -->
+    <div id="photoModal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-sm flex flex-col transition-opacity duration-300 opacity-0">
+        <div class="flex justify-between items-center px-4 py-4 bg-gradient-to-b from-black/50 to-transparent">
+            <button id="closeModal" class="text-iosBlue text-[17px] hover:text-blue-400 font-medium active:opacity-70 transition-opacity">Selesai</button>
+            <span id="modalDateInfo" class="text-white text-[13px] font-medium tracking-wide"></span>
+            <div class="w-12"></div>
+        </div>
+        <div class="flex-1 flex items-center justify-center overflow-hidden px-2">
+            <img id="modalImage" src="" alt="Pratinjau" class="max-w-full max-h-[80vh] object-contain rounded-sm transition-transform duration-300 scale-95">
+        </div>
+        <div class="pb-12 pt-6 px-6 flex justify-center bg-gradient-to-t from-black/80 to-transparent">
+            <a id="downloadBtn" href="" download="" target="_blank" class="w-full sm:w-auto sm:px-20 bg-white text-black font-semibold text-[17px] py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Simpan Foto
+            </a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Logika Utama -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // PASTIKAN FIREBASE CONFIG INI BENAR
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA25g_miNf3okAtHZHDxIT_tYQzKcZl1fI",
+            authDomain: "galeri-almatv.firebaseapp.com",
+            projectId: "galeri-almatv",
+            storageBucket: "galeri-almatv.firebasestorage.app",
+            messagingSenderId: "1018447084967",
+            appId: "1:1018447084967:web:b0d705dced1f9ea7a4ca82"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const dateChipsContainer = document.getElementById('dateChipsContainer');
+        const photoGallery = document.getElementById('photoGallery');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const photoModal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('modalImage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const closeModal = document.getElementById('closeModal');
+        const modalDateInfo = document.getElementById('modalDateInfo');
+
+        let photoDatabase = [];
+
+        // Splash Screen 3 Detik
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            splash.classList.add('opacity-0');
+            setTimeout(() => {
+                splash.classList.add('hidden');
+                document.getElementById('mainHeader').classList.remove('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+            }, 500);
+        }, 3000);
+
+        async function fetchPhotos() {
+            try {
+                emptyMessage.classList.add('hidden');
+                loadingMessage.classList.remove('hidden');
+
+                const q = query(collection(db, "photos"), orderBy("tanggal", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                photoDatabase = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    photoDatabase.push({
+                        id: doc.id,
+                        date: data.tanggal,
+                        displayDate: data.displayDate,
+                        url: data.url
+                    });
+                });
+
+                loadingMessage.classList.add('hidden');
+                
+                if(photoDatabase.length === 0) {
+                    emptyMessage.innerHTML = `<h3 class="text-xl font-semibold text-gray-400 dark:text-gray-600">Belum ada foto yang diunggah.</h3>`;
+                    emptyMessage.classList.remove('hidden');
+                } else {
+                    emptyMessage.classList.remove('hidden');
+                    renderDateChips();
+                }
+
+            } catch (error) {
+                console.error("Gagal mengambil data: ", error);
+                loadingMessage.classList.add('hidden');
+                emptyMessage.innerHTML = `<h3 class="text-red-500">Gagal memuat data. Periksa koneksi internet.</h3>`;
+                emptyMessage.classList.remove('hidden');
+            }
+        }
+
+        function renderDateChips() {
+            dateChipsContainer.innerHTML = '';
+            const uniqueDates = [...new Map(photoDatabase.map(item => [item.date, item])).values()];
+            
+            uniqueDates.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'date-chip px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-iosDark text-[15px] font-medium whitespace-nowrap active:scale-95 transition-all text-gray-700 dark:text-gray-300';
+                btn.style.scrollSnapAlign = 'start';
+                btn.textContent = item.displayDate;
+                btn.dataset.date = item.date;
+                
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.date-chip').forEach(c => {
+                        c.classList.remove('bg-iosBlue', 'text-white', 'border-iosBlue', 'dark:border-iosBlue');
+                        c.classList.add('bg-white', 'dark:bg-iosDark', 'text-gray-700', 'dark:text-gray-300', 'border-gray-300', 'dark:border-gray-700');
+                    });
+                    btn.classList.remove('bg-white', 'dark:bg-iosDark', 'text-gray-700', 'dark:text-gray-300', 'border-gray-300', 'dark:border-gray-700');
+                    btn.classList.add('bg-iosBlue', 'text-white', 'border-iosBlue', 'dark:border-iosBlue');
+                    
+                    renderGallery(item.date);
+                });
+                
+                dateChipsContainer.appendChild(btn);
+            });
+        }
+
+        function renderGallery(selectedDate) {
+            photoGallery.innerHTML = ''; 
+            const filteredPhotos = photoDatabase.filter(p => p.date === selectedDate);
+
+            if (filteredPhotos.length === 0) {
+                emptyMessage.classList.remove('hidden');
+            } else {
+                emptyMessage.classList.add('hidden');
+                
+                filteredPhotos.forEach(photo => {
+                    const imgBox = document.createElement('div');
+                    imgBox.className = 'aspect-square bg-gray-200 dark:bg-gray-800 cursor-pointer active:opacity-70 transition-opacity';
+                    imgBox.innerHTML = `<img src="${photo.url}" loading="lazy" class="w-full h-full object-cover">`;
+                    
+                    imgBox.addEventListener('click', () => openModal(photo));
+                    photoGallery.appendChild(imgBox);
+                });
+            }
+        }
+
+        function openModal(photo) {
+            modalImage.src = photo.url;
+            downloadBtn.href = photo.url;
+            downloadBtn.download = `AlMursyidulAmin_${photo.id}.jpg`;
+            modalDateInfo.textContent = photo.displayDate;
+            
+            photoModal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            
+            setTimeout(() => {
+                photoModal.classList.remove('opacity-0');
+                modalImage.classList.remove('scale-95');
+                modalImage.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closePhotoModal() {
+            photoModal.classList.add('opacity-0');
+            modalImage.classList.remove('scale-100');
+            modalImage.classList.add('scale-95');
+            
+            setTimeout(() => {
+                photoModal.classList.add('hidden');
+                document.body.classList.remove('modal-open');
+                modalImage.src = '';
+            }, 300);
+        }
+
+        closeModal.addEventListener('click', closePhotoModal);
+        
+        fetchPhotos();
+    </script>
+</body>
+</html>
