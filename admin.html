@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin - Galeri Al Mursyidul Amin TV</title>
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/hzai18/Pustaka-Lirik-TV/refs/heads/main/gold.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans flex flex-col">
@@ -33,7 +31,6 @@
     <!-- PANEL ADMIN UTAMA -->
     <div id="adminPanel" class="w-full max-w-3xl mx-auto p-6 hidden">
         
-        <!-- Header Panel -->
         <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-6 flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold text-gray-800">Halo, <span id="lblUser" class="text-blue-600">Admin</span></h1>
@@ -42,7 +39,6 @@
             <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-100 transition">Logout</button>
         </div>
 
-        <!-- TABS NAVIGASI -->
         <div class="flex gap-2 mb-6 border-b border-gray-300 pb-2">
             <button id="tabUpload" class="px-4 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Upload Foto</button>
             <button id="tabManage" class="px-4 py-2 font-bold text-gray-500 hover:text-gray-800 hidden">Manajemen Admin</button>
@@ -53,17 +49,25 @@
             <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Dokumentasi</h2>
             <div class="space-y-5">
                 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori Acara</label>
-                    <select id="kategoriInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium cursor-pointer">
-                        <option value="Tasmiyah" selected>Tasmiyah</option>
-                        <option value="Akad Nikah">Akad Nikah</option>
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori Acara</label>
+                        <select id="kategoriInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium cursor-pointer">
+                            <option value="Tasmiyah" selected>Tasmiyah</option>
+                            <option value="Akad Nikah">Akad Nikah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Acara</label>
+                        <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    </div>
                 </div>
 
+                <!-- INPUT YOUTUBE BARU -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Acara</label>
-                    <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Link YouTube Live Streaming (Opsional)</label>
+                    <input type="url" id="youtubeInput" placeholder="Masukkan link YouTube (Contoh: https://youtube.com/...)" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                    <p class="text-xs text-gray-500 mt-1">*Kosongkan jika acara ini tidak memiliki rekaman video.</p>
                 </div>
 
                 <div>
@@ -82,7 +86,7 @@
             </div>
         </div>
 
-        <!-- KONTEN: MANAJEMEN AKUN (Hanya Superadmin) -->
+        <!-- KONTEN: MANAJEMEN AKUN -->
         <div id="contentManage" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-200 border-l-4 border-l-yellow-400">
             <h2 class="text-xl font-bold text-gray-800 mb-2">Buat Akun Admin Baru</h2>
             <p class="text-sm text-gray-500 mb-6">Akun ini bisa digunakan oleh fotografer untuk login dan upload foto.</p>
@@ -101,7 +105,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ================= CONFIG FIREBASE =================
         const firebaseConfig = {
             apiKey: "AIzaSyA25g_miNf3okAtHZHDxIT_tYQzKcZl1fI",
             authDomain: "galeri-almatv.firebaseapp.com",
@@ -112,32 +115,22 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        // ================= CONFIG IMGBB =================
         const IMGBB_API_KEY = "8ef542627deeb43e5440fa06fd1d452c";
 
-        // DOM Elemen
         const loginScreen = document.getElementById('loginScreen');
         const adminPanel = document.getElementById('adminPanel');
         const lblUser = document.getElementById('lblUser');
         const lblRole = document.getElementById('lblRole');
         
-        // --- LOGIKA SETUP DEFAULT SUPERADMIN ---
         async function checkDefaultSuperadmin() {
             const q = query(collection(db, "users"), where("username", "==", "superadmin"));
             const snapshot = await getDocs(q);
             if (snapshot.empty) {
-                await setDoc(doc(db, "users", "superadmin_doc"), {
-                    username: "superadmin",
-                    password: "superadmin123",
-                    role: "superadmin"
-                });
-                console.log("Akun superadmin default berhasil dibuat.");
+                await setDoc(doc(db, "users", "superadmin_doc"), { username: "superadmin", password: "superadmin123", role: "superadmin" });
             }
         }
         checkDefaultSuperadmin();
 
-        // --- LOGIKA LOGIN ---
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const userVal = document.getElementById('usernameInput').value;
             const passVal = document.getElementById('passwordInput').value;
@@ -152,35 +145,21 @@
 
                 if (!querySnapshot.empty) {
                     const userData = querySnapshot.docs[0].data();
-                    
                     loginScreen.classList.add('hidden');
                     adminPanel.classList.remove('hidden');
-                    
                     lblUser.innerText = userData.username;
                     lblRole.innerText = userData.role;
-                    
-                    if(userData.role === 'superadmin') {
-                        document.getElementById('tabManage').classList.remove('hidden');
-                    }
+                    if(userData.role === 'superadmin') document.getElementById('tabManage').classList.remove('hidden');
                     err.classList.add('hidden');
-                } else {
-                    err.classList.remove('hidden');
-                }
-            } catch(e) {
-                console.error(e);
-                err.innerText = "Terjadi kesalahan koneksi!";
-                err.classList.remove('hidden');
-            }
+                } else { err.classList.remove('hidden'); }
+            } catch(e) { err.innerText = "Terjadi kesalahan koneksi!"; err.classList.remove('hidden'); }
             
             document.getElementById('loginText').classList.remove('hidden');
             document.getElementById('loginLoading').classList.add('hidden');
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            window.location.reload();
-        });
+        document.getElementById('logoutBtn').addEventListener('click', () => window.location.reload());
 
-        // --- LOGIKA TABS ---
         const tabUpload = document.getElementById('tabUpload');
         const tabManage = document.getElementById('tabManage');
         const contentUpload = document.getElementById('contentUpload');
@@ -198,41 +177,31 @@
             tabUpload.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tabUpload.classList.add('text-gray-500');
         });
 
-        // --- LOGIKA BUAT AKUN ADMIN ---
         document.getElementById('createAdminBtn').addEventListener('click', async () => {
             const nu = document.getElementById('newUsername').value;
             const np = document.getElementById('newPassword').value;
             const msg = document.getElementById('createMsg');
 
-            if(!nu || !np) {
-                msg.innerText = "Isi username & password!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return;
-            }
+            if(!nu || !np) { msg.innerText = "Isi username & password!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return; }
 
             try {
                 const qCheck = query(collection(db, "users"), where("username", "==", nu));
                 const snap = await getDocs(qCheck);
-                if(!snap.empty) {
-                    msg.innerText = "Username sudah dipakai!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return;
-                }
+                if(!snap.empty) { msg.innerText = "Username sudah dipakai!"; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); return; }
 
-                await addDoc(collection(db, "users"), {
-                    username: nu,
-                    password: np,
-                    role: "admin"
-                });
-
+                await addDoc(collection(db, "users"), { username: nu, password: np, role: "admin" });
                 msg.innerText = `Berhasil! Akun "${nu}" sudah bisa digunakan.`; msg.className = "text-sm font-semibold text-green-600"; msg.classList.remove('hidden');
                 document.getElementById('newUsername').value = ""; document.getElementById('newPassword').value = "";
-            } catch(e) {
-                msg.innerText = "Gagal membuat akun."; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden');
-            }
+            } catch(e) { msg.innerText = "Gagal membuat akun."; msg.className = "text-sm font-semibold text-red-500"; msg.classList.remove('hidden'); }
         });
 
-        // --- LOGIKA UPLOAD ---
+        // --- UPLOAD LOGIC ---
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
         const dateInput = document.getElementById('dateInput');
         const kategoriInput = document.getElementById('kategoriInput');
+        const youtubeInput = document.getElementById('youtubeInput'); // Ambil nilai YT
+        
         const statusArea = document.getElementById('statusArea');
         const progressBar = document.getElementById('progressBar');
         const statusText = document.getElementById('statusText');
@@ -247,6 +216,7 @@
             const files = fileInput.files;
             const dateValue = dateInput.value;
             const kategoriValue = kategoriInput.value;
+            const youtubeValue = youtubeInput.value; // Simpan nilai dari input YouTube
 
             if (!dateValue) { alert("Pilih tanggal acara!"); return; }
             if (files.length === 0) { alert("Pilih minimal 1 foto!"); return; }
@@ -273,6 +243,7 @@
                             tanggal: dateValue,
                             displayDate: displayDate,
                             url: imgbbResult.data.url,
+                            youtubeUrl: youtubeValue, // MENGIRIM LINK YOUTUBE KE DATABASE
                             uploader: lblUser.innerText,
                             uploadedAt: new Date()
                         });
@@ -284,7 +255,8 @@
 
             statusText.innerText = `Selesai! ${uploadedFiles} foto ${kategoriValue} terupload.`;
             statusText.classList.add('text-green-600');
-            fileInput.value = ""; uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
+            fileInput.value = ""; youtubeInput.value = ""; // Bersihkan form
+            uploadBtn.disabled = false; uploadBtn.classList.remove('opacity-50');
         });
     </script>
 </body>
