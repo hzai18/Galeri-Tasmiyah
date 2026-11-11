@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Al Mursyidul Amin TV Galeri</title>
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/hzai18/Pustaka-Lirik-TV/refs/heads/main/gold.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,7 +44,6 @@
                 </div>
             </div>
             
-            <!-- Dropdown Kategori (Tasmiyah diutamakan) -->
             <select id="categorySelect" class="w-full sm:w-auto bg-gray-200/80 dark:bg-gray-800/80 text-[15px] py-2 px-4 pr-10 rounded-xl appearance-none outline-none focus:ring-2 focus:ring-iosBlue font-medium border-0 cursor-pointer">
                 <option value="Tasmiyah" selected>Tasmiyah</option>
                 <option value="Akad Nikah">Akad Nikah</option>
@@ -67,6 +65,22 @@
         <!-- Filter Tanggal -->
         <div class="w-full overflow-x-auto hide-scrollbar pl-4 pr-4 pb-4 mb-2" style="scroll-snap-type: x mandatory;">
             <div id="dateChipsContainer" class="flex gap-3 w-max"></div>
+        </div>
+
+        <!-- BANNER YOUTUBE (Tersembunyi secara default) -->
+        <div id="youtubeBanner" class="hidden px-4 mb-6">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                <div class="text-center sm:text-left">
+                    <h3 class="text-gray-800 dark:text-white font-bold text-[15px] mb-1 flex items-center justify-center sm:justify-start gap-2">
+                        <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        Rekaman Video Tersedia
+                    </h3>
+                    <p class="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed">Selain dokumentasi foto, Anda juga dapat menyaksikan kembali keseruan acara ini melalui rekaman <i>Live Streaming</i> kami.</p>
+                </div>
+                <a id="youtubeLinkBtn" href="#" target="_blank" class="shrink-0 w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white text-[14px] font-bold py-3 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2">
+                    Tonton di YouTube
+                </a>
+            </div>
         </div>
 
         <!-- Grid Foto -->
@@ -117,13 +131,16 @@
         const loadingMessage = document.getElementById('loadingMessage');
         const lblKategori = document.getElementById('lblKategori');
         
-        // Modal
+        // Elemen YouTube
+        const youtubeBanner = document.getElementById('youtubeBanner');
+        const youtubeLinkBtn = document.getElementById('youtubeLinkBtn');
+        
         const photoModal = document.getElementById('photoModal');
         const modalImage = document.getElementById('modalImage');
         const downloadBtn = document.getElementById('downloadBtn');
         const closeModal = document.getElementById('closeModal');
 
-        let allPhotos = []; // Simpan semua foto
+        let allPhotos = [];
 
         setTimeout(() => {
             document.getElementById('splashScreen').classList.add('opacity-0');
@@ -147,10 +164,11 @@
                     const data = doc.data();
                     allPhotos.push({
                         id: doc.id,
-                        kategori: data.kategori || "Tasmiyah", // Default jika data lama tidak ada kategori
+                        kategori: data.kategori || "Tasmiyah",
                         date: data.tanggal,
                         displayDate: data.displayDate,
-                        url: data.url
+                        url: data.url,
+                        youtubeUrl: data.youtubeUrl || "" // Ambil data URL Youtube jika ada
                     });
                 });
 
@@ -167,8 +185,8 @@
         function updateViewByCategory(kategori) {
             lblKategori.textContent = kategori;
             photoGallery.innerHTML = '';
+            youtubeBanner.classList.add('hidden'); // Sembunyikan banner YT saat ganti kategori
             
-            // Filter foto HANYA untuk kategori yang dipilih
             const categoryPhotos = allPhotos.filter(p => p.kategori === kategori);
             
             if(categoryPhotos.length === 0) {
@@ -210,6 +228,16 @@
             photoGallery.innerHTML = ''; 
             const finalPhotos = categoryPhotos.filter(p => p.date === selectedDate);
 
+            // CEK YOUTUBE URL: Apakah ada foto di tanggal ini yang memiliki link YT?
+            const photoWithYt = finalPhotos.find(p => p.youtubeUrl && p.youtubeUrl.trim() !== "");
+            if(photoWithYt) {
+                youtubeBanner.classList.remove('hidden');
+                youtubeLinkBtn.href = photoWithYt.youtubeUrl;
+            } else {
+                youtubeBanner.classList.add('hidden');
+                youtubeLinkBtn.href = "#";
+            }
+
             emptyMessage.classList.add('hidden');
             finalPhotos.forEach(photo => {
                 const imgBox = document.createElement('div');
@@ -224,7 +252,6 @@
             updateViewByCategory(e.target.value);
         });
 
-        // --- Modal Logika ---
         function openModal(photo) {
             modalImage.src = photo.url;
             downloadBtn.href = photo.url;
